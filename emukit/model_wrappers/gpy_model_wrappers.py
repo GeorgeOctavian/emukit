@@ -1,14 +1,14 @@
 # Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-
+import numbers
 from typing import Optional, Tuple
 
 import GPy
 import numpy as np
 
 from ..bayesian_optimization.interfaces import IEntropySearchModel
-from ..core.interfaces import IDifferentiable, IJointlyDifferentiable, IModel, IModelWithNoise, IPriorHyperparameters
+from ..core.interfaces import IDifferentiable, IJointlyDifferentiable, IModel, IModelWithNoise, IPriorHyperparameters, IModelWithSampling
 from ..experimental_design.interfaces import ICalculateVarianceReduction
 
 
@@ -20,6 +20,7 @@ class GPyModelWrapper(
     IEntropySearchModel,
     IPriorHyperparameters,
     IModelWithNoise,
+    IModelWithSampling
 ):
     """
     This is a thin wrapper around GPy models to allow users to plug GPy models into Emukit
@@ -175,7 +176,57 @@ class GPyModelWrapper(
         else:
             self.model[self.model._fixes_] = sample_hyperparameters
         self.model._trigger_params_changed()
+        
+        
+    def sample_function(self, n_samples: int, bounds: np.ndarray, seed: int,
+                        resolution: int) -> Tuple[np.ndarray, np.ndarray]:
+       
+        # TODO: find replacement 
+        rng = check_random_state(seed)
+        X_grid = np.linspace()
+        
+        y_mean, y_cov = self.model.predict(X_grid, full_cov=True)
+        
+        # TODO: change this 
+        if y_mean.ndim == 1:
+            y_samples = rng.multivariate_normal(y_mean, y_cov, n_samples).T
+        else:
+            y_samples = [
+                rng.multivariate_normal(
+                    y_mean[:, target], y_cov[..., target], n_samples
+                ).T[:, np.newaxis]
+                for target in range(y_mean.shape[1])
+            ]
+            y_samples = np.hstack(y_samples)
+        return y_samples
+        
 
+#TODO: replace this     
+def check_random_state(seed):
+    """Turn seed into a np.random.RandomState instance.
+
+    Parameters
+    ----------
+    seed : None, int or instance of RandomState
+        If seed is None, return the RandomState singleton used by np.random.
+        If seed is an int, return a new RandomState instance seeded with seed.
+        If seed is already a RandomState instance, return it.
+        Otherwise raise ValueError.
+
+    Returns
+    -------
+    :class:`numpy:numpy.random.RandomState`
+        The random state object based on `seed` parameter.
+    """
+    if seed is None or seed is np.random:
+        return np.random.mtrand._rand
+    if isinstance(seed, numbers.Integral):
+        return np.random.RandomState(seed)
+    if isinstance(seed, np.random.RandomState):
+        return seed
+    raise ValueError(
+        "%r cannot be used to seed a numpy.random.RandomState instance" % seed
+    )
 
 def dSigma(x_predict: np.ndarray, x_train: np.ndarray, kern: GPy.kern, w_inv: np.ndarray) -> np.ndarray:
     """

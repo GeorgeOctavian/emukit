@@ -106,3 +106,18 @@ class IModelWithNoise:
         :return: Tuple of mean and variance which are 2d arrays of shape (n_points x n_outputs)
         """
         raise NotImplementedError
+
+
+class IModelWithSampling:
+    def sample_function(self, n_samples: int, bounds: np.ndarray, seed: int,
+                        resolution: int) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        For given input bounds and resolution, sample a function rendered by X and y.
+
+        :n_samples: Number of functions to sample from posterior
+        :bounds: array of shape (n_dimensions x 2) to render low and high bounds for each dimension
+        :seed: Random seed for reproducible experiments 
+        :resolution: The interval for sampling across the domain
+        :return: Tuple of X and y values which are 2d arrays of shape (resolution x n_dimensions), (resolution x 1)
+        """
+        raise NotImplementedError

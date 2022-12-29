@@ -26,3 +26,7 @@ def test_optimization_with_linear_constraint():
     lp.run_loop(branin_fcn, 5)
 
     assert True
+    
+    
+if __name__ == '__main__':
+    test_optimization_with_linear_constraint()

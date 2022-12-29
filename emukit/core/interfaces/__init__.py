@@ -7,3 +7,4 @@ from .models import IJointlyDifferentiable  # noqa: F401
 from .models import IModel  # noqa: F401
 from .models import IModelWithNoise  # noqa: F401
 from .models import IPriorHyperparameters  # noqa: F401
+from .models import IModelWithSampling
